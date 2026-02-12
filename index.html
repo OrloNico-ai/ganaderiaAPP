@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GanaderoApp - Ganadería Electrónica AR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#6f9b69',
+            'primary-dark': '#2e7d32',
+          }
+        }
+      }
+    };
+  </script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Login */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+    }
+
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-logo {
+      font-size: 48px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .login-title {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .login-subtitle {
+      font-size: 16px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #2e7d32;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background-color: #2e7d32;
+      color: white;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background-color: #1b5e20;
+    }
+
+    .btn-secondary {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background-color: #e0e0e0;
+    }
+
+    .demo-info {
+      margin-top: 20px;
+      text-align: center;
+      color: #999;
+      font-size: 14px;
+    }
+
+    /* Header */
+    .header {
+      background-color: #2e7d32;
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .header-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .logout-btn {
+      background: transparent;
+      color: white;
+      border: 1px solid white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: white;
+      color: #2e7d32;
+    }
+
+    /* Navigation */
+    .nav {
+      background-color: white;
+      padding: 0 40px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      gap: 30px;
+    }
+
+    .nav-item {
+      padding: 15px 0;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      font-weight: 500;
+      color: #666;
+    }
+
+    .nav-item:hover {
+      color: #2e7d32;
+    }
+
+    .nav-item.active {
+      color: #2e7d32;
+      border-bottom-color: #2e7d32;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Dashboard Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: bold;
+      color: #2e7d32;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* Animal Grid */
+    .animals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .animal-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .animal-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .animal-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 15px;
+    }
+
+    .animal-name {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .animal-caravana {
+      font-size: 12px;
+      color: #999;
+      margin-top: 3px;
+    }
+
+    .animal-peso {
+      text-align: right;
+    }
+
+    .peso-valor {
+      font-size: 28px;
+      font-weight: bold;
+      color: #2e7d32;
+    }
+
+    .peso-unidad {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .animal-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    .info-item {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .info-label {
+      font-weight: 500;
+      color: #999;
+      display: block;
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    /* Table */
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table thead {
+      background-color: #f5f5f5;
+    }
+
+    .table th,
+    .table td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    .table th {
+      font-weight: 600;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    /* Chart */
+    .chart-container {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .chart-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2e7d32;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Alert Badge */
+    .alert-badge {
+      display: inline-block;
+      background-color: #ff9800;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    /* Búsqueda y Alta Manual — modo campo (alto contraste, uso bajo el sol) */
+    .search-hero {
+      background: linear-gradient(135deg, #2d5a2d 0%, #1b3d1b 100%);
+      padding: 28px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      border: 2px solid #1a331a;
+    }
+    .search-hero h3 { color: #fff !important; font-size: 1.25rem !important; font-weight: 700 !important; }
+    .search-hero p { color: rgba(255,255,255,0.95) !important; font-size: 1rem !important; }
+    .search-input-wrap {
+      display: flex;
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .search-input-wrap input {
+      flex: 1;
+      padding: 18px 20px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.4);
+      background: #fff;
+      font-size: 18px;
+      font-weight: 500;
+      color: #111;
+      min-height: 56px;
+    }
+    .search-input-wrap input::placeholder { color: #666; }
+    .search-input-wrap .btn { min-height: 56px; padding: 18px 28px; font-size: 18px; font-weight: 600; }
+    .quick-action-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+      border-left: 4px solid #6f9b69;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-action-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .recent-search-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    .recent-search-item:hover {
+      background: #e5e5e5;
+    }
+    .lote-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lote-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) {
+      .form-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* Fotos de animales: miniatura y perfil */
+    .animal-photo-thumb {
+      width: 56px;
+      height: 56px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #eee;
+    }
+    .animal-photo-profile {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .stat-icon-img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .back-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eee;
+    }
+    .back-bar button {
+      background: none;
+      border: none;
+      color: #2e7d32;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .back-bar button:hover { text-decoration: underline; }
+    .hide { display: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const API_URL = 'http://localhost:3001/api';
+
+    // Fotos genéricas por tipo/raza (realistas). Si el animal tiene foto_url se usa esa.
+    const DEFAULT_IMAGES = {
+      hembra: 'https://images.unsplash.com/photo-1546445317-29f4545e9d53?w=400&h=300&fit=crop',
+      macho: 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400&h=300&fit=crop',
+    };
+    const FALLBACK_IMAGE = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#e0e0e0" width="200" height="200"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="14">Sin imagen</text></svg>');
+
+    function getAnimalImage(animal) {
+      if (animal && animal.foto_url && animal.foto_url.trim()) return animal.foto_url.trim();
+      if (animal && animal.sexo && DEFAULT_IMAGES[animal.sexo]) return DEFAULT_IMAGES[animal.sexo];
+      return DEFAULT_IMAGES.hembra;
+    }
+
+    // Formato de fecha: día/mes/año (dd/mm/yyyy)
+    function formatearFecha(fecha) {
+      if (!fecha) return '—';
+      const s = String(fecha).trim();
+      const part = s.split(/[-T]/);
+      if (part.length >= 3) {
+        const [y, m, d] = part;
+        return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+      }
+      return s;
+    }
+
+    // ==================== COMPONENTE DE LOGIN ====================
+    function LoginScreen({ onLogin }) {
+      const [email, setEmail] = useState('demo@campo.com');
+      const [password, setPassword] = useState('demo123');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            onLogin(data.token, data.usuario);
+          } else {
+            setError(data.error || 'Credenciales inválidas');
+          }
+        } catch (error) {
+          setError('No se pudo conectar al servidor. Asegúrate que el backend esté corriendo.');
+        }
+        setLoading(false);
+      };
+
+      return (
+        <div className="login-container">
+          <div className="login-card">
+            <div className="login-logo">
+              <img src={DEFAULT_IMAGES.hembra} alt="GanaderoApp" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 12 }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling?.classList?.remove('hide'); }} />
+              <span className="hide" style={{ fontSize: 48 }}>G</span>
+            </div>
+            <h1 className="login-title">GanaderoApp</h1>
+            <p className="login-subtitle">Ganadería Electrónica AR - Dashboard Web</p>
+
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Contraseña</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              {error && <div style={{ color: 'red', marginBottom: 15 }}>{error}</div>}
+
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? 'Ingresando...' : 'Ingresar'}
+              </button>
+            </form>
+
+            <p className="demo-info">Demo: demo@campo.com / demo123</p>
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== COMPONENTE PRINCIPAL ====================
+    function Dashboard({ token, usuario, onLogout }) {
+      const [activeTab, setActiveTab] = useState('busqueda');
+      const [animales, setAnimales] = useState([]);
+      const [dashboard, setDashboard] = useState(null);
+      const [tratamientosPendientes, setTratamientosPendientes] = useState([]);
+      const [tratamientosTodos, setTratamientosTodos] = useState([]);
+      const [busquedasRecientes, setBusquedasRecientes] = useState([]);
+      const [lotes, setLotes] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [selectedAnimalId, setSelectedAnimalId] = useState(null);
+      const [selectedLoteId, setSelectedLoteId] = useState(null);
+
+      useEffect(() => {
+        cargarDatos();
+      }, [activeTab]);
+
+      const cargarDatos = async () => {
+        setLoading(true);
+
+        try {
+          const [resAnimales, resDashboard, resTratamientosPend, resTratamientosTodos, resBusquedas, resLotes] = await Promise.all([
+            fetch(`${API_URL}/animales`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API_URL}/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API_URL}/tratamientos/pendientes`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API_URL}/tratamientos`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API_URL}/busquedas-recientes`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API_URL}/lotes`, { headers: { Authorization: `Bearer ${token}` } }),
+          ]);
+
+          const [dataAnimales, dataDashboard, dataPendientes, dataTratamientosTodos, dataBusquedas, dataLotes] = await Promise.all([
+            resAnimales.json(),
+            resDashboard.json(),
+            resTratamientosPend.json(),
+            resTratamientosTodos.json(),
+            resBusquedas.json(),
+            resLotes.json(),
+          ]);
+
+          setAnimales(dataAnimales);
+          setDashboard(dataDashboard);
+          setTratamientosPendientes(dataPendientes || []);
+          setTratamientosTodos(dataTratamientosTodos || []);
+          setBusquedasRecientes(dataBusquedas);
+          setLotes(dataLotes);
+        } catch (error) {
+          console.error('Error al cargar datos:', error);
+        }
+
+        setLoading(false);
+      };
+
+      return (
+        <div className="app">
+          {/* Header */}
+          <div className="header">
+            <div>
+              <div className="header-title">
+                <img src={DEFAULT_IMAGES.hembra} alt="" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 6, verticalAlign: 'middle', marginRight: 8 }} onError={(e) => { e.target.style.display = 'none'; }} />
+                {usuario.nombre_campo}
+              </div>
+              <div className="header-subtitle">{usuario.email}</div>
+            </div>
+            <div className="header-actions">
+              <button onClick={cargarDatos} className="btn btn-secondary">
+                🔄 Actualizar
+              </button>
+              <button onClick={onLogout} className="logout-btn">
+                Cerrar Sesión
+              </button>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="nav">
+            <div
+              className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => { setSelectedAnimalId(null); setSelectedLoteId(null); setActiveTab('dashboard'); }}
+            >
+              Dashboard
+            </div>
+            <div
+              className={`nav-item ${activeTab === 'busqueda' ? 'active' : ''}`}
+              onClick={() => { setSelectedAnimalId(null); setSelectedLoteId(null); setActiveTab('busqueda'); }}
+            >
+              Inicio (cargar animal)
+            </div>
+            <div
+              className={`nav-item ${activeTab === 'animales' ? 'active' : ''}`}
+              onClick={() => { setSelectedAnimalId(null); setSelectedLoteId(null); setActiveTab('animales'); }}
+            >
+              Ganado {animales.length > 0 && `(${animales.length})`}
+            </div>
+            <div
+              className={`nav-item ${activeTab === 'lotes' ? 'active' : ''}`}
+              onClick={() => { setSelectedAnimalId(null); setSelectedLoteId(null); setActiveTab('lotes'); }}
+            >
+              Lotes {lotes.length > 0 && `(${lotes.length})`}
+            </div>
+            <div
+              className={`nav-item ${activeTab === 'tratamientos' ? 'active' : ''}`}
+              onClick={() => { setSelectedAnimalId(null); setSelectedLoteId(null); setActiveTab('tratamientos'); }}
+            >
+              Tratamientos
+              {tratamientosPendientes.length > 0 && (
+                <span className="alert-badge">{tratamientosPendientes.length}</span>
+              )}
+            </div>
+            <div
+              className={`nav-item ${activeTab === 'reportes' ? 'active' : ''}`}
+              onClick={() => { setSelectedAnimalId(null); setSelectedLoteId(null); setActiveTab('reportes'); }}
+            >
+              Reportes
+            </div>
+            <div
+              className={`nav-item ${activeTab === 'ajustes' ? 'active' : ''}`}
+              onClick={() => { setSelectedAnimalId(null); setSelectedLoteId(null); setActiveTab('ajustes'); }}
+            >
+              Ajustes
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="main-content">
+            {selectedAnimalId ? (
+              <>
+                <div className="back-bar">
+                  <button type="button" onClick={() => setSelectedAnimalId(null)}>← Volver</button>
+                </div>
+                <AnimalProfile
+                  animalId={selectedAnimalId}
+                  token={token}
+                  onBack={() => setSelectedAnimalId(null)}
+                  onRefresh={cargarDatos}
+                />
+              </>
+            ) : selectedLoteId ? (
+              <>
+                <div className="back-bar">
+                  <button type="button" onClick={() => setSelectedLoteId(null)}>← Volver a Lotes</button>
+                </div>
+                <LoteDetail
+                  loteId={selectedLoteId}
+                  token={token}
+                  onBack={() => setSelectedLoteId(null)}
+                  onSelectAnimal={(id) => setSelectedAnimalId(id)}
+                  getAnimalImage={getAnimalImage}
+                />
+              </>
+            ) : loading ? (
+              <div className="loading">
+                <div className="spinner"></div>
+                <p>Cargando datos...</p>
+              </div>
+            ) : (
+              <>
+                {activeTab === 'dashboard' && (
+                  <DashboardTab dashboard={dashboard} animales={animales} tratamientosPendientes={tratamientosPendientes} getAnimalImage={getAnimalImage} />
+                )}
+                {activeTab === 'busqueda' && (
+                  <BusquedaAltaTab
+                    token={token}
+                    busquedasRecientes={busquedasRecientes}
+                    lotes={lotes}
+                    onRefresh={cargarDatos}
+                    onSelectLote={(id) => setSelectedLoteId(id)}
+                    onSelectAnimal={(id) => setSelectedAnimalId(id)}
+                    getAnimalImage={getAnimalImage}
+                  />
+                )}
+                {activeTab === 'animales' && (
+                  <AnimalesTab animales={animales} onSelectAnimal={(id) => setSelectedAnimalId(id)} getAnimalImage={getAnimalImage} />
+                )}
+                {activeTab === 'lotes' && (
+                  <LotesTab lotes={lotes} onSelectLote={(id) => setSelectedLoteId(id)} getAnimalImage={getAnimalImage} />
+                )}
+                {activeTab === 'tratamientos' && (
+                  <TratamientosTab tratamientos={tratamientosTodos} tratamientosPendientes={tratamientosPendientes} />
+                )}
+                {activeTab === 'reportes' && (
+                  <ReportesTab dashboard={dashboard} animales={animales} lotes={lotes} onSelectLote={(id) => setSelectedLoteId(id)} />
+                )}
+                {activeTab === 'ajustes' && (
+                  <AjustesTab usuario={usuario} token={token} lotes={lotes} onRefresh={cargarDatos} />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== TAB DASHBOARD ====================
+    function DashboardTab({ dashboard, animales, tratamientosPendientes }) {
+      const chartRef = useRef(null);
+      const chartInstance = useRef(null);
+
+      useEffect(() => {
+        if (dashboard && chartRef.current) {
+          // Destruir gráfico anterior si existe
+          if (chartInstance.current) {
+            chartInstance.current.destroy();
+          }
+
+          const ctx = chartRef.current.getContext('2d');
+          
+          chartInstance.current = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: dashboard.evolucion_peso.map(p => formatearFecha(p.fecha)).reverse(),
+              datasets: [{
+                label: 'Peso Promedio (kg)',
+                data: dashboard.evolucion_peso.map(p => p.peso_promedio).reverse(),
+                borderColor: '#2e7d32',
+                backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                tension: 0.4,
+                fill: true,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top',
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: false
+                }
+              }
+            }
+          });
+        }
+
+        return () => {
+          if (chartInstance.current) {
+            chartInstance.current.destroy();
+          }
+        };
+      }, [dashboard]);
+
+      if (!dashboard) return null;
+
+      return (
+        <>
+          {/* Stats */}
+          <div className="stats-grid">
+            <div className="stat-card">
+              <img className="stat-icon-img" src={DEFAULT_IMAGES.hembra} alt="" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} />
+              <div className="stat-value">{dashboard.total_animales}</div>
+              <div className="stat-label">Total de Animales</div>
+            </div>
+
+            <div className="stat-card">
+              <img className="stat-icon-img" src={DEFAULT_IMAGES.hembra} alt="" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} />
+              <div className="stat-value">{dashboard.total_hembras}</div>
+              <div className="stat-label">Hembras</div>
+            </div>
+
+            <div className="stat-card">
+              <img className="stat-icon-img" src={DEFAULT_IMAGES.macho} alt="" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} />
+              <div className="stat-value">{dashboard.total_machos}</div>
+              <div className="stat-label">Machos</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">Trat.</div>
+              <div className="stat-value">{tratamientosPendientes.length}</div>
+              <div className="stat-label">Tratamientos Pendientes</div>
+            </div>
+          </div>
+
+          {/* Chart */}
+          <div className="chart-container">
+            <div className="chart-title">Evolución de Peso Promedio (Últimos 30 días)</div>
+            <div style={{ height: '300px' }}>
+              <canvas ref={chartRef}></canvas>
+            </div>
+          </div>
+
+          {/* Alertas */}
+          {tratamientosPendientes.length > 0 && (
+            <div className="chart-container">
+              <div className="chart-title">🔔 Próximos Tratamientos</div>
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Animal</th>
+                      <th>Tratamiento</th>
+                      <th>Fecha Programada</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tratamientosPendientes.slice(0, 5).map((t) => (
+                      <tr key={t.id}>
+                        <td>
+                          {t.animal_nombre || t.caravana}
+                          <br />
+                          <small style={{ color: '#999' }}>{t.caravana}</small>
+                        </td>
+                        <td>{t.tipo}: {t.descripcion}</td>
+                        <td>{formatearFecha(t.proxima_fecha)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // ==================== TAB ANIMALES ====================
+    function AnimalesTab({ animales, onSelectAnimal, getAnimalImage }) {
+      if (animales.length === 0) {
+        return (
+          <div className="empty-state">
+            <img src={DEFAULT_IMAGES.hembra} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 12, marginBottom: 16 }} onError={(e) => { e.target.style.display = 'none'; }} />
+            <h2>No hay animales registrados</h2>
+            <p>Usa Búsqueda y Alta para registrar animales</p>
+          </div>
+        );
+      }
+
+      return (
+        <>
+          <div className="section-header">
+            <h2 className="section-title">Mis Animales ({animales.length})</h2>
+          </div>
+
+          <div className="animals-grid">
+            {animales.map((animal) => (
+              <div key={animal.id} className="animal-card" onClick={() => onSelectAnimal && onSelectAnimal(animal.id)} style={{ cursor: onSelectAnimal ? 'pointer' : 'default' }}>
+                <div className="animal-card-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <img src={getAnimalImage(animal)} alt="" className="animal-photo-thumb" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} />
+                    <div>
+                      <div className="animal-name">{animal.nombre || 'Sin nombre'}</div>
+                      <div className="animal-caravana">{animal.caravana}</div>
+                    </div>
+                  </div>
+                  <div className="animal-peso">
+                    <div className="peso-valor">{animal.peso_actual || '-'}</div>
+                    <div className="peso-unidad">kg</div>
+                  </div>
+                </div>
+
+                <div className="animal-info">
+                  <div className="info-item">
+                    <span className="info-label">Raza</span>
+                    {animal.raza || 'N/A'}
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Potrero</span>
+                    {animal.potrero || 'N/A'}
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Lote</span>
+                    {animal.lote_nombre || 'N/A'}
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Último Pesaje</span>
+                    {formatearFecha(animal.fecha_ultimo_peso) || 'N/A'}
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Estado</span>
+                    {animal.estado || 'Activo'}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    // ==================== PERFIL DE ANIMAL ====================
+    function AnimalProfile({ animalId, token, onBack, onRefresh }) {
+      const [animal, setAnimal] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [fotoUrlEdit, setFotoUrlEdit] = useState('');
+      const [showFotoForm, setShowFotoForm] = useState(false);
+      const [formPesaje, setFormPesaje] = useState({ peso: '', fecha: new Date().toISOString().split('T')[0], notas: '' });
+      const [formTratamiento, setFormTratamiento] = useState({ tipo: 'vacuna', descripcion: '', fecha: '', proxima_fecha: '', veterinario: '' });
+      const [enviandoPesaje, setEnviandoPesaje] = useState(false);
+      const [enviandoTratamiento, setEnviandoTratamiento] = useState(false);
+      const [guardandoFoto, setGuardandoFoto] = useState(false);
+      const chartRef = useRef(null);
+      const chartInstance = useRef(null);
+
+      useEffect(() => {
+        let cancelled = false;
+        (async () => {
+          setLoading(true);
+          try {
+            const res = await fetch(`${API_URL}/animales/${animalId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const data = await res.json();
+            if (!cancelled && res.ok) {
+              setAnimal(data);
+              setFotoUrlEdit(data.foto_url || '');
+            }
+          } catch (e) {}
+          if (!cancelled) setLoading(false);
+        })();
+        return () => { cancelled = true; };
+      }, [animalId, token]);
+
+      useEffect(() => {
+        if (!animal || !chartRef.current) return;
+        const puntos = [];
+        if (animal.peso_nacimiento != null && animal.peso_nacimiento !== '' && animal.fecha_nacimiento) {
+          puntos.push({ fecha: animal.fecha_nacimiento, peso: parseFloat(animal.peso_nacimiento) });
+        }
+        if (animal.pesajes && animal.pesajes.length > 0) {
+          puntos.push(...animal.pesajes.map(p => ({ fecha: p.fecha, peso: p.peso })));
+        }
+        puntos.sort((a, b) => a.fecha.localeCompare(b.fecha));
+        if (puntos.length === 0) return;
+        if (chartInstance.current) chartInstance.current.destroy();
+        const ctx = chartRef.current.getContext('2d');
+        chartInstance.current = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: puntos.map(p => formatearFecha(p.fecha)),
+            datasets: [{
+              label: 'Peso (kg)',
+              data: puntos.map(p => p.peso),
+              borderColor: '#2e7d32',
+              backgroundColor: 'rgba(46, 125, 50, 0.1)',
+              tension: 0.4,
+              fill: true,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: false } }
+          }
+        });
+        return () => { if (chartInstance.current) chartInstance.current.destroy(); };
+      }, [animal]);
+
+      const guardarFoto = async (e) => {
+        e.preventDefault();
+        setGuardandoFoto(true);
+        try {
+          const res = await fetch(`${API_URL}/animales/${animalId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              nombre: animal.nombre,
+              raza: animal.raza,
+              potrero: animal.potrero,
+              estado: animal.estado,
+              lote_id: animal.lote_id,
+              foto_url: fotoUrlEdit || null,
+            }),
+          });
+          if (res.ok) {
+            setAnimal(a => ({ ...a, foto_url: fotoUrlEdit || null }));
+            setShowFotoForm(false);
+            onRefresh();
+          }
+        } catch (e) {}
+        setGuardandoFoto(false);
+      };
+
+      const enviarPesaje = async (e) => {
+        e.preventDefault();
+        if (!formPesaje.peso) return;
+        setEnviandoPesaje(true);
+        try {
+          const res = await fetch(`${API_URL}/pesajes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              animal_id: animalId,
+              peso: parseFloat(formPesaje.peso),
+              fecha: formPesaje.fecha,
+              notas: formPesaje.notas || null,
+            }),
+          });
+          if (res.ok) {
+            setFormPesaje({ peso: '', fecha: new Date().toISOString().split('T')[0], notas: '' });
+            const r = await fetch(`${API_URL}/animales/${animalId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const data = await r.json();
+            if (r.ok) setAnimal(data);
+            onRefresh();
+          }
+        } catch (e) {}
+        setEnviandoPesaje(false);
+      };
+
+      const enviarTratamiento = async (e) => {
+        e.preventDefault();
+        if (!formTratamiento.descripcion.trim()) return;
+        setEnviandoTratamiento(true);
+        try {
+          const res = await fetch(`${API_URL}/tratamientos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              animal_id: animalId,
+              tipo: formTratamiento.tipo,
+              descripcion: formTratamiento.descripcion.trim(),
+              fecha: formTratamiento.fecha || new Date().toISOString().split('T')[0],
+              proxima_fecha: formTratamiento.proxima_fecha || null,
+              veterinario: formTratamiento.veterinario || null,
+            }),
+          });
+          if (res.ok) {
+            setFormTratamiento({ tipo: 'vacuna', descripcion: '', fecha: '', proxima_fecha: '', veterinario: '' });
+            const r = await fetch(`${API_URL}/animales/${animalId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const data = await r.json();
+            if (r.ok) setAnimal(data);
+            onRefresh();
+          }
+        } catch (e) {}
+        setEnviandoTratamiento(false);
+      };
+
+      if (loading || !animal) {
+        return (
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Cargando perfil...</p>
+          </div>
+        );
+      }
+
+      const imgSrc = animal.foto_url && animal.foto_url.trim() ? animal.foto_url : (animal.sexo === 'macho' ? DEFAULT_IMAGES.macho : DEFAULT_IMAGES.hembra);
+
+      return (
+        <div>
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 24 }}>
+            <div>
+              <img src={imgSrc} alt="" className="animal-photo-profile" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} />
+              <button type="button" className="btn btn-secondary" style={{ marginTop: 12, width: '100%' }} onClick={() => setShowFotoForm(!showFotoForm)}>
+                {showFotoForm ? 'Cancelar' : 'Cambiar foto'}
+              </button>
+              {showFotoForm && (
+                <form onSubmit={guardarFoto} style={{ marginTop: 8 }}>
+                  <input className="form-input" placeholder="URL de la foto" value={fotoUrlEdit} onChange={(e) => setFotoUrlEdit(e.target.value)} />
+                  <button type="submit" className="btn btn-primary" style={{ marginTop: 8 }} disabled={guardandoFoto}>{guardandoFoto ? 'Guardando...' : 'Guardar'}</button>
+                </form>
+              )}
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <h2 style={{ fontSize: 24, marginBottom: 8 }}>{animal.nombre || 'Sin nombre'}</h2>
+              <p style={{ color: '#666', marginBottom: 4 }}>Caravana: {animal.caravana}</p>
+              <p style={{ color: '#666', marginBottom: 4 }}>Raza: {animal.raza || '—'} · Sexo: {animal.sexo === 'hembra' ? 'Hembra' : 'Macho'}</p>
+              <p style={{ color: '#666', marginBottom: 4 }}>Potrero: {animal.potrero || '—'} · Lote: {animal.lote_nombre || '—'}</p>
+              <p style={{ fontSize: 18, fontWeight: 600, color: '#2e7d32', marginTop: 8 }}>Peso actual: {animal.peso_actual || '—'} kg</p>
+            </div>
+          </div>
+
+          <div className="chart-container">
+            <div className="chart-title">Evolución de peso</div>
+            {((animal.peso_nacimiento != null && animal.peso_nacimiento !== '' && animal.fecha_nacimiento) || (animal.pesajes && animal.pesajes.length > 0)) ? (
+              <div style={{ height: 260 }}>
+                <canvas ref={chartRef}></canvas>
+              </div>
+            ) : (
+              <p style={{ color: '#999' }}>Sin pesajes registrados. Agregá peso al nacer al cargar el animal o un pesaje abajo.</p>
+            )}
+          </div>
+
+          <div className="chart-container">
+            <div className="chart-title">Registrar nuevo pesaje</div>
+            <form onSubmit={enviarPesaje}>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Peso (kg)</label>
+                  <input type="number" step="0.1" className="form-input" value={formPesaje.peso} onChange={(e) => setFormPesaje({ ...formPesaje, peso: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Fecha</label>
+                  <input type="date" className="form-input" value={formPesaje.fecha} onChange={(e) => setFormPesaje({ ...formPesaje, fecha: e.target.value })} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Notas</label>
+                <input className="form-input" value={formPesaje.notas} onChange={(e) => setFormPesaje({ ...formPesaje, notas: e.target.value })} placeholder="Opcional" />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={enviandoPesaje}>{enviandoPesaje ? 'Guardando...' : 'Guardar pesaje'}</button>
+            </form>
+          </div>
+
+          <div className="chart-container">
+            <div className="chart-title">Historial de pesajes</div>
+            {(() => {
+              const filas = [];
+              if (animal.peso_nacimiento != null && animal.peso_nacimiento !== '' && animal.fecha_nacimiento) {
+                filas.push({ id: 'nacimiento', fecha: animal.fecha_nacimiento, peso: animal.peso_nacimiento, notas: 'Peso al nacer / alta' });
+              }
+              if (animal.pesajes && animal.pesajes.length > 0) {
+                filas.push(...animal.pesajes);
+              }
+              filas.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+              if (filas.length === 0) return <p style={{ color: '#999' }}>No hay pesajes. El peso al nacer se muestra acá si lo cargaste al dar de alta.</p>;
+              return (
+                <div className="table-container">
+                  <table className="table">
+                    <thead><tr><th>Fecha</th><th>Peso (kg)</th><th>Notas</th></tr></thead>
+                    <tbody>
+                      {filas.map((p) => (
+                        <tr key={p.id || 'nacimiento'}>
+                          <td>{formatearFecha(p.fecha)}</td>
+                          <td>{p.peso}</td>
+                          <td>{p.notas || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="chart-container">
+            <div className="chart-title">Asignar tratamiento</div>
+            <form onSubmit={enviarTratamiento}>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Tipo</label>
+                  <select className="form-input" value={formTratamiento.tipo} onChange={(e) => setFormTratamiento({ ...formTratamiento, tipo: e.target.value })}>
+                    <option value="vacuna">Vacuna</option>
+                    <option value="desparasitacion">Desparasitación</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Descripción</label>
+                  <input className="form-input" value={formTratamiento.descripcion} onChange={(e) => setFormTratamiento({ ...formTratamiento, descripcion: e.target.value })} placeholder="Ej: Antiaftosa" required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Fecha</label>
+                  <input type="date" className="form-input" value={formTratamiento.fecha} onChange={(e) => setFormTratamiento({ ...formTratamiento, fecha: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Próxima fecha (recordatorio)</label>
+                  <input type="date" className="form-input" value={formTratamiento.proxima_fecha} onChange={(e) => setFormTratamiento({ ...formTratamiento, proxima_fecha: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Veterinario</label>
+                  <input className="form-input" value={formTratamiento.veterinario} onChange={(e) => setFormTratamiento({ ...formTratamiento, veterinario: e.target.value })} />
+                </div>
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={enviandoTratamiento}>{enviandoTratamiento ? 'Guardando...' : 'Guardar tratamiento'}</button>
+            </form>
+          </div>
+
+          <div className="chart-container">
+            <div className="chart-title">Tratamientos realizados y programados</div>
+            {animal.tratamientos && animal.tratamientos.length > 0 ? (
+              <div className="table-container">
+                <table className="table">
+                  <thead><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Próxima fecha</th><th>Veterinario</th></tr></thead>
+                  <tbody>
+                    {animal.tratamientos.map((t) => (
+                      <tr key={t.id}>
+                        <td><span style={{ background: '#e3f2fd', padding: '4px 8px', borderRadius: 4, fontSize: 12 }}>{t.tipo}</span></td>
+                        <td>{t.descripcion}</td>
+                        <td>{formatearFecha(t.fecha)}</td>
+                        <td>{t.proxima_fecha ? (t.proxima_fecha >= new Date().toISOString().split('T')[0] ? formatearFecha(t.proxima_fecha) + ' (pendiente)' : formatearFecha(t.proxima_fecha)) : '—'}</td>
+                        <td>{t.veterinario || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ color: '#999' }}>No hay tratamientos registrados.</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== DETALLE DE LOTE ====================
+    function LoteDetail({ loteId, token, onBack, onSelectAnimal, getAnimalImage }) {
+      const [lote, setLote] = useState(null);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        let cancelled = false;
+        (async () => {
+          setLoading(true);
+          try {
+            const res = await fetch(`${API_URL}/lotes/${loteId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const data = await res.json();
+            if (!cancelled && res.ok) setLote(data);
+          } catch (e) {}
+          if (!cancelled) setLoading(false);
+        })();
+        return () => { cancelled = true; };
+      }, [loteId, token]);
+
+      if (loading || !lote) {
+        return (
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Cargando lote...</p>
+          </div>
+        );
+      }
+
+      return (
+        <div>
+          <h2 style={{ fontSize: 24, marginBottom: 8 }}>{lote.nombre}</h2>
+          <p style={{ color: '#666', marginBottom: 24 }}>{lote.ubicacion || '—'} · {lote.cantidad_animales ?? 0} animales</p>
+
+          {lote.animales && lote.animales.length > 0 ? (
+            <div className="animals-grid">
+              {lote.animales.map((animal) => (
+                <div key={animal.id} className="animal-card" onClick={() => onSelectAnimal(animal.id)} style={{ cursor: 'pointer' }}>
+                  <div className="animal-card-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <img src={getAnimalImage(animal)} alt="" className="animal-photo-thumb" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} />
+                      <div>
+                        <div className="animal-name">{animal.nombre || 'Sin nombre'}</div>
+                        <div className="animal-caravana">{animal.caravana}</div>
+                      </div>
+                    </div>
+                    <div className="animal-peso">
+                      <div className="peso-valor">{animal.peso_actual || '-'}</div>
+                      <div className="peso-unidad">kg</div>
+                    </div>
+                  </div>
+                  <div className="animal-info">
+                    <div className="info-item"><span className="info-label">Raza</span> {animal.raza || 'N/A'}</div>
+                    <div className="info-item"><span className="info-label">Potrero</span> {animal.potrero || 'N/A'}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No hay animales en este lote.</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==================== TAB LOTES ====================
+    function LotesTab({ lotes, onSelectLote, getAnimalImage }) {
+      if (!lotes || lotes.length === 0) {
+        return (
+          <div className="empty-state">
+            <h2>No hay lotes</h2>
+            <p>Crea un lote en Ajustes y asígnalo a los animales.</p>
+          </div>
+        );
+      }
+
+      return (
+        <>
+          <div className="section-header">
+            <h2 className="section-title">Lotes ({lotes.length})</h2>
+          </div>
+          <p style={{ color: '#666', marginBottom: 20 }}>Haz clic en un lote para ver el listado de animales.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {lotes.map((l) => (
+              <div key={l.id} className="lote-card" onClick={() => onSelectLote(l.id)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>{l.nombre}</div>
+                    <div style={{ fontSize: 14, color: '#666' }}>{l.cantidad_animales ?? 0} animales · {l.ubicacion || '—'}</div>
+                  </div>
+                  <span style={{ color: '#6f9b69', fontWeight: 600 }}>Ver listado →</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    // ==================== TAB TRATAMIENTOS ====================
+    function TratamientosTab({ tratamientos, tratamientosPendientes }) {
+      const pendientesIds = (tratamientosPendientes || []).map(t => t.id);
+
+      if (!tratamientos || tratamientos.length === 0) {
+        return (
+          <div className="empty-state">
+            <h2>No hay tratamientos registrados</h2>
+            <p>Los tratamientos que agregues en el perfil de cada animal aparecerán aquí.</p>
+          </div>
+        );
+      }
+
+      return (
+        <>
+          <div className="section-header">
+            <h2 className="section-title">Todos los tratamientos ({tratamientos.length})</h2>
+            {tratamientosPendientes && tratamientosPendientes.length > 0 && (
+              <span className="alert-badge">{tratamientosPendientes.length} próximos / vencidos</span>
+            )}
+          </div>
+
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Animal</th>
+                  <th>Caravana</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                  <th>Fecha realizado</th>
+                  <th>Próxima fecha</th>
+                  <th>Veterinario</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tratamientos.map((t) => (
+                  <tr key={t.id} style={pendientesIds.includes(t.id) ? { background: '#fff8e1' } : {}}>
+                    <td>{t.animal_nombre || 'Sin nombre'}</td>
+                    <td>{t.caravana}</td>
+                    <td>
+                      <span style={{
+                        background: '#e3f2fd',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px'
+                      }}>
+                        {t.tipo}
+                      </span>
+                    </td>
+                    <td>{t.descripcion}</td>
+                    <td>{formatearFecha(t.fecha)}</td>
+                    <td>{t.proxima_fecha ? (pendientesIds.includes(t.id) ? formatearFecha(t.proxima_fecha) + ' (pendiente)' : formatearFecha(t.proxima_fecha)) : '—'}</td>
+                    <td>{t.veterinario || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      );
+    }
+
+    // ==================== TAB BÚSQUEDA Y ALTA MANUAL ====================
+    function BusquedaAltaTab({ token, busquedasRecientes, lotes, onRefresh, onSelectLote, onSelectAnimal, getAnimalImage }) {
+      const [caravanaBuscar, setCaravanaBuscar] = useState('');
+      const [resultadoBusqueda, setResultadoBusqueda] = useState(null);
+      const [loadingBusqueda, setLoadingBusqueda] = useState(false);
+      const [errorBusqueda, setErrorBusqueda] = useState('');
+      const [mostrarFormAlta, setMostrarFormAlta] = useState(false);
+      const inputCaravanaRef = useRef(null);
+
+      useEffect(() => {
+        inputCaravanaRef.current?.focus();
+      }, []);
+      const [formAlta, setFormAlta] = useState({
+        caravana: '', nombre: '', raza: '', sexo: 'hembra',
+        fecha_nacimiento: '', peso_nacimiento: '', potrero: '', lote_id: ''
+      });
+      const [enviandoAlta, setEnviandoAlta] = useState(false);
+      const [mensajeAlta, setMensajeAlta] = useState('');
+
+      const buscarPorCaravana = async (caravana) => {
+        const codigo = (caravana || caravanaBuscar).trim();
+        if (!codigo) return;
+        setLoadingBusqueda(true);
+        setErrorBusqueda('');
+        setResultadoBusqueda(null);
+        try {
+          const res = await fetch(`${API_URL}/animales/caravana/${encodeURIComponent(codigo)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            onRefresh();
+            if (onSelectAnimal && data.id) onSelectAnimal(data.id);
+            else setResultadoBusqueda(data);
+          } else {
+            setResultadoBusqueda({ noEncontrado: true, caravana: codigo });
+            setErrorBusqueda('');
+          }
+        } catch (e) {
+          setErrorBusqueda('No se pudo conectar al servidor');
+        }
+        setLoadingBusqueda(false);
+      };
+
+      const abrirAltaConCaravana = (caravana) => {
+        setFormAlta(prev => ({ ...prev, caravana: caravana || '' }));
+        setMostrarFormAlta(true);
+        setResultadoBusqueda(null);
+        setErrorBusqueda('');
+      };
+
+      const cerrarNoEncontrado = () => {
+        setResultadoBusqueda(null);
+        setErrorBusqueda('');
+      };
+
+      const irAPerfilDesdeReciente = (b) => {
+        if (b.animal_id && onSelectAnimal) {
+          onSelectAnimal(b.animal_id);
+        } else {
+          setCaravanaBuscar(b.caravana);
+          buscarPorCaravana(b.caravana);
+        }
+      };
+
+      const registrarAnimal = async (e) => {
+        e.preventDefault();
+        if (!formAlta.caravana.trim()) {
+          setMensajeAlta('La caravana es obligatoria');
+          return;
+        }
+        setEnviandoAlta(true);
+        setMensajeAlta('');
+        try {
+          const res = await fetch(`${API_URL}/animales`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              caravana: formAlta.caravana.trim(),
+              nombre: formAlta.nombre || null,
+              raza: formAlta.raza || null,
+              sexo: formAlta.sexo || 'hembra',
+              fecha_nacimiento: formAlta.fecha_nacimiento || null,
+              peso_nacimiento: formAlta.peso_nacimiento ? parseFloat(formAlta.peso_nacimiento) : null,
+              potrero: formAlta.potrero || null,
+              lote_id: formAlta.lote_id ? parseInt(formAlta.lote_id) : null,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setMensajeAlta('Animal registrado correctamente.');
+            setFormAlta({ caravana: '', nombre: '', raza: '', sexo: 'hembra', fecha_nacimiento: '', peso_nacimiento: '', potrero: '', lote_id: '' });
+            setMostrarFormAlta(false);
+            onRefresh();
+          } else {
+            setMensajeAlta(data.error || 'Error al registrar');
+          }
+        } catch (e) {
+          setMensajeAlta('Error de conexión');
+        }
+        setEnviandoAlta(false);
+      };
+
+      return (
+        <>
+          <div className="section-header">
+            <h2 className="section-title">Cargar animal</h2>
+            <span style={{ color: '#2d5a2d', fontWeight: 600 }}>En campo</span>
+          </div>
+
+          <div className="search-hero">
+            <h3 style={{ color: 'white', marginBottom: 8 }}>Buscar por caravana</h3>
+            <p style={{ color: 'rgba(255,255,255,0.95)', fontSize: 16 }}>Escaneá con el bastón RFID (el código se carga solo) o ingresá la caravana manualmente</p>
+            <div className="search-input-wrap">
+              <input
+                ref={inputCaravanaRef}
+                type="text"
+                placeholder="Escaneá con el bastón o escribí ej: ARG001234567890"
+                value={caravanaBuscar}
+                onChange={(e) => setCaravanaBuscar(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); buscarPorCaravana(); } }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 'none' }}
+                onClick={() => buscarPorCaravana()}
+                disabled={loadingBusqueda}
+              >
+                {loadingBusqueda ? 'Buscando...' : 'Buscar'}
+              </button>
+            </div>
+          </div>
+
+          <h3 style={{ marginBottom: 12, fontSize: 18 }}>Acciones Rápidas</h3>
+          <div
+            className="quick-action-card"
+            onClick={() => setMostrarFormAlta(!mostrarFormAlta)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 28 }}>➕</span>
+              <div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>Registrar Nuevo Animal Manualmente</div>
+                <div style={{ color: '#666', fontSize: 14 }}>Use esta opción si el tag RFID no es legible o no está disponible.</div>
+              </div>
+              <span style={{ marginLeft: 'auto' }}>▶</span>
+            </div>
+          </div>
+
+          {mostrarFormAlta && (
+            <div className="chart-container" style={{ marginTop: 16 }}>
+              <div className="chart-title">Alta de animal</div>
+              <form onSubmit={registrarAnimal}>
+                <div className="form-grid-2">
+                  <div className="form-group">
+                    <label className="form-label">Caravana *</label>
+                    <input className="form-input" value={formAlta.caravana} onChange={(e) => setFormAlta({ ...formAlta, caravana: e.target.value })} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Nombre</label>
+                    <input className="form-input" value={formAlta.nombre} onChange={(e) => setFormAlta({ ...formAlta, nombre: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Raza</label>
+                    <input className="form-input" value={formAlta.raza} onChange={(e) => setFormAlta({ ...formAlta, raza: e.target.value })} placeholder="Ej: Aberdeen Angus" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Sexo</label>
+                    <select className="form-input" value={formAlta.sexo} onChange={(e) => setFormAlta({ ...formAlta, sexo: e.target.value })}>
+                      <option value="hembra">Hembra</option>
+                      <option value="macho">Macho</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Fecha nacimiento</label>
+                    <input type="date" className="form-input" value={formAlta.fecha_nacimiento} onChange={(e) => setFormAlta({ ...formAlta, fecha_nacimiento: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Peso nacimiento (kg)</label>
+                    <input type="number" step="0.1" className="form-input" value={formAlta.peso_nacimiento} onChange={(e) => setFormAlta({ ...formAlta, peso_nacimiento: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Potrero</label>
+                    <input className="form-input" value={formAlta.potrero} onChange={(e) => setFormAlta({ ...formAlta, potrero: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Lote</label>
+                    <select className="form-input" value={formAlta.lote_id} onChange={(e) => setFormAlta({ ...formAlta, lote_id: e.target.value })}>
+                      <option value="">Sin lote</option>
+                      {lotes.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
+                    </select>
+                  </div>
+                </div>
+                {mensajeAlta && <p style={{ marginBottom: 12, color: mensajeAlta.includes('correctamente') ? '#2e7d32' : '#c62828' }}>{mensajeAlta}</p>}
+                <button type="submit" className="btn btn-primary" disabled={enviandoAlta}>{enviandoAlta ? 'Guardando...' : 'Guardar animal'}</button>
+              </form>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 32 }}>
+            <div>
+              <h3 style={{ marginBottom: 12, fontSize: 18 }}>Búsquedas Recientes</h3>
+              {busquedasRecientes.length === 0 ? (
+                <p style={{ color: '#666', fontSize: 15 }}>No hay búsquedas recientes. Buscá por caravana arriba para abrir el perfil.</p>
+              ) : (
+                busquedasRecientes.slice(0, 8).map((b) => (
+                  <div key={b.id} className="recent-search-item" onClick={() => irAPerfilDesdeReciente(b)}>
+                    <span>🏷️</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 16 }}>{b.caravana}</div>
+                      <div style={{ fontSize: 14, color: '#555' }}>{b.animal_nombre || '—'} · {b.raza || '—'}</div>
+                    </div>
+                    <span style={{ fontSize: 14, color: '#2d5a2d', fontWeight: 600 }}>Ver perfil →</span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div>
+              <h3 style={{ marginBottom: 12, fontSize: 18 }}>Lotes Frecuentes</h3>
+              {lotes.length === 0 ? (
+                <p style={{ color: '#999' }}>No hay lotes. Crea uno desde Ajustes o al dar de alta un animal.</p>
+              ) : (
+                lotes.map((l) => (
+                  <div key={l.id} className="lote-card" onClick={() => onSelectLote && onSelectLote(l.id)}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>{l.nombre}</div>
+                        <div style={{ fontSize: 14, color: '#666' }}>{l.cantidad_animales || 0} animales · {l.ubicacion || '—'}</div>
+                      </div>
+                      <span style={{ color: '#6f9b69', fontWeight: 600 }}>Ver listado →</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {errorBusqueda && (
+            <div style={{ marginTop: 20, padding: 20, background: '#ffebee', border: '2px solid #c62828', borderRadius: 10, fontSize: 18, fontWeight: 600, color: '#b71c1c' }}>
+              {errorBusqueda}
+            </div>
+          )}
+
+          {resultadoBusqueda && resultadoBusqueda.noEncontrado && (
+            <div className="chart-container" style={{ marginTop: 24, border: '2px solid #ff9800', background: '#fff8e1' }}>
+              <div className="chart-title">Animal no registrado</div>
+              <p style={{ marginBottom: 16, fontSize: 16, color: '#333' }}>
+                La caravana <strong>{resultadoBusqueda.caravana}</strong> no está cargada en el sistema.
+              </p>
+              <p style={{ marginBottom: 20, fontSize: 16, color: '#555' }}>¿Querés cargarlo como nuevo animal?</p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn-primary" onClick={() => abrirAltaConCaravana(resultadoBusqueda.caravana)}>
+                  Sí, cargar nuevo animal
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={cerrarNoEncontrado}>
+                  No
+                </button>
+              </div>
+            </div>
+          )}
+          {resultadoBusqueda && !resultadoBusqueda.noEncontrado && (
+            <div className="chart-container" style={{ marginTop: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+                <div>
+                  <div className="chart-title">Resultado: {resultadoBusqueda.nombre || resultadoBusqueda.caravana}</div>
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12 }}>
+                    <img src={getAnimalImage(resultadoBusqueda)} alt="" className="animal-photo-thumb" style={{ width: 64, height: 64 }} onError={(e) => { e.target.src = FALLBACK_IMAGE; }} />
+                    <div className="animal-info" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <div className="info-item"><span className="info-label">Caravana</span> {resultadoBusqueda.caravana}</div>
+                      <div className="info-item"><span className="info-label">Raza</span> {resultadoBusqueda.raza || 'N/A'}</div>
+                      <div className="info-item"><span className="info-label">Potrero</span> {resultadoBusqueda.potrero || 'N/A'}</div>
+                      <div className="info-item"><span className="info-label">Peso actual</span> {resultadoBusqueda.peso_actual || '—'} kg</div>
+                    </div>
+                  </div>
+                </div>
+                {onSelectAnimal && resultadoBusqueda.id && (
+                  <button type="button" className="btn btn-primary" onClick={() => onSelectAnimal(resultadoBusqueda.id)}>Ver perfil del animal</button>
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // ==================== TAB REPORTES ====================
+    function ReportesTab({ dashboard, animales, lotes, onSelectLote }) {
+      return (
+        <>
+          <div className="section-header">
+            <h2 className="section-title">Reportes</h2>
+          </div>
+
+          <div className="stats-grid" style={{ marginBottom: 32 }}>
+            <div className="stat-card">
+              <div className="stat-icon">🐄</div>
+              <div className="stat-value">{dashboard?.total_animales ?? 0}</div>
+              <div className="stat-label">Total animales</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">🐮</div>
+              <div className="stat-value">{dashboard?.total_hembras ?? 0}</div>
+              <div className="stat-label">Hembras</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">🐂</div>
+              <div className="stat-value">{dashboard?.total_machos ?? 0}</div>
+              <div className="stat-label">Machos</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">📦</div>
+              <div className="stat-value">{lotes?.length ?? 0}</div>
+              <div className="stat-label">Lotes</div>
+            </div>
+          </div>
+
+          <div className="chart-container">
+            <div className="chart-title">Resumen por Lote</div>
+            {!lotes || lotes.length === 0 ? (
+              <p style={{ color: '#999' }}>No hay lotes registrados.</p>
+            ) : (
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Lote</th>
+                      <th>Ubicación</th>
+                      <th>Cantidad</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lotes.map((l) => (
+                      <tr key={l.id} onClick={() => onSelectLote && onSelectLote(l.id)} style={{ cursor: onSelectLote ? 'pointer' : 'default' }}>
+                        <td>{l.nombre}</td>
+                        <td>{l.ubicacion || '—'}</td>
+                        <td>{l.cantidad_animales ?? 0} animales</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+          {onSelectLote && lotes?.length > 0 && (
+            <p style={{ marginTop: 12, color: '#666', fontSize: 14 }}>Haz clic en una fila para ver el listado de animales del lote.</p>
+          )}
+        </>
+      );
+    }
+
+    // ==================== TAB AJUSTES ====================
+    function AjustesTab({ usuario, token, lotes, onRefresh }) {
+      const [nuevoLote, setNuevoLote] = useState({ nombre: '', ubicacion: '' });
+      const [guardandoLote, setGuardandoLote] = useState(false);
+      const [msgLote, setMsgLote] = useState('');
+
+      const crearLote = async (e) => {
+        e.preventDefault();
+        if (!nuevoLote.nombre.trim()) return;
+        setGuardandoLote(true);
+        setMsgLote('');
+        try {
+          const res = await fetch(`${API_URL}/lotes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(nuevoLote),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setMsgLote('Lote creado correctamente.');
+            setNuevoLote({ nombre: '', ubicacion: '' });
+            onRefresh();
+          } else setMsgLote(data.error || 'Error');
+        } catch (e) { setMsgLote('Error de conexión'); }
+        setGuardandoLote(false);
+      };
+
+      return (
+        <>
+          <div className="section-header">
+            <h2 className="section-title">Ajustes</h2>
+          </div>
+
+          <div className="chart-container">
+            <div className="chart-title">Cuenta</div>
+            <div style={{ display: 'grid', gap: 16 }}>
+              <div className="info-item">
+                <span className="info-label">Establecimiento</span>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>{usuario?.nombre_campo || '—'}</div>
+              </div>
+              <div className="info-item">
+                <span className="info-label">Email</span>
+                <div style={{ fontSize: 16 }}>{usuario?.email || '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="chart-container" style={{ marginTop: 20 }}>
+            <div className="chart-title">Crear Lote</div>
+            <form onSubmit={crearLote}>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Nombre del lote</label>
+                  <input className="form-input" value={nuevoLote.nombre} onChange={(e) => setNuevoLote({ ...nuevoLote, nombre: e.target.value })} placeholder="Ej: Lote Invernada 2024" required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Ubicación</label>
+                  <input className="form-input" value={nuevoLote.ubicacion} onChange={(e) => setNuevoLote({ ...nuevoLote, ubicacion: e.target.value })} placeholder="Ej: Corral Norte" />
+                </div>
+              </div>
+              {msgLote && <p style={{ marginBottom: 8, color: msgLote.includes('correctamente') ? '#2e7d32' : '#c62828' }}>{msgLote}</p>}
+              <button type="submit" className="btn btn-primary" disabled={guardandoLote}>{guardandoLote ? 'Guardando...' : 'Crear lote'}</button>
+            </form>
+            {lotes?.length > 0 && (
+              <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #eee' }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Tus lotes ({lotes.length})</div>
+                <ul style={{ color: '#666', paddingLeft: 20 }}>
+                  {lotes.map((l) => <li key={l.id}>{l.nombre} — {l.ubicacion || '—'} ({l.cantidad_animales ?? 0} animales)</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="chart-container" style={{ marginTop: 20 }}>
+            <div className="chart-title">Ganadería Electrónica AR</div>
+            <p style={{ color: '#666', marginBottom: 12 }}>Sistema de tracking ganadero compatible con normativa SENASA. Búsqueda por caravana, lotes, pesajes y tratamientos.</p>
+            <p style={{ fontSize: 14, color: '#999' }}>GanaderoApp • Dashboard Web</p>
+          </div>
+        </>
+      );
+    }
+
+    // ==================== APP PRINCIPAL ====================
+    function App() {
+      const [token, setToken] = useState(null);
+      const [usuario, setUsuario] = useState(null);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        checkAuth();
+      }, []);
+
+      const checkAuth = () => {
+        const savedToken = localStorage.getItem('token');
+        const savedUsuario = localStorage.getItem('usuario');
+
+        if (savedToken && savedUsuario) {
+          setToken(savedToken);
+          setUsuario(JSON.parse(savedUsuario));
+        }
+
+        setLoading(false);
+      };
+
+      const handleLogin = (newToken, newUsuario) => {
+        setToken(newToken);
+        setUsuario(newUsuario);
+      };
+
+      const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        setToken(null);
+        setUsuario(null);
+      };
+
+      if (loading) {
+        return (
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Cargando...</p>
+          </div>
+        );
+      }
+
+      return token ? (
+        <Dashboard token={token} usuario={usuario} onLogout={handleLogout} />
+      ) : (
+        <LoginScreen onLogin={handleLogin} />
+      );
+    }
+
+    // Renderizar la aplicación
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
