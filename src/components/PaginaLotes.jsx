@@ -20,7 +20,18 @@ const PaginaLotes = () => {
     const cargarLotes = async () => {
       try {
         const data = await obtenerTodosLosLotes();
-        if (mounted) setLotes(data);
+        if (!mounted) return;
+        setLotes(data);
+
+        const animalesResultados = await Promise.all(
+          data.map(async (lote) => {
+            const animales = await obtenerAnimalesDelLote(lote.id);
+            return [lote.id, ordenarPorCaravana(animales)];
+          })
+        );
+
+        if (!mounted) return;
+        setAnimalesPorLote(Object.fromEntries(animalesResultados));
       } catch (err) {
         if (mounted) setError(err);
       }
@@ -33,36 +44,33 @@ const PaginaLotes = () => {
     };
   }, []);
 
-  const cargarAnimalesLote = async (loteId) => {
-    if (animalesPorLote[loteId]) return animalesPorLote[loteId];
-    const data = await obtenerAnimalesDelLote(loteId);
-    const ordenados = ordenarPorCaravana(data);
-    setAnimalesPorLote((prev) => ({ ...prev, [loteId]: ordenados }));
-    return ordenados;
-  };
-
-  const abrirLote = async (lote) => {
-    await cargarAnimalesLote(lote.id);
+  const abrirLote = (lote) => {
     setLoteExpandidoId((prev) => (prev === lote.id ? null : lote.id));
     setMenuAbierto(false);
   };
 
   const nuevoLote = async () => {
-    const nombre = window.prompt('Nombre del lote');
-    if (!nombre) return;
-    const created = await crearLote({ nombre });
-    setLotes((prev) => [created, ...prev]);
-    setMenuAbierto(false);
+    try {
+      const nombre = window.prompt('Nombre del lote');
+      if (!nombre || !nombre.trim()) return;
+      const created = await crearLote({ nombre: nombre.trim() });
+      setLotes((prev) => [created, ...prev]);
+      setAnimalesPorLote((prev) => ({ ...prev, [created.id]: [] }));
+      setLoteExpandidoId(created.id);
+      setMenuAbierto(false);
+    } catch (err) {
+      setError(err);
+    }
   };
 
-  const calcularResumen = (animales = []) => {
-    const cc = animales.length;
+  const calcularResumen = (lote, animales = []) => {
+    const cc = animales.length || lote.cantidad_animales || 0;
     const gdps = animales.map((animal) => Number(animal.gdp)).filter((gdp) => Number.isFinite(gdp));
     const gdpPromedio = gdps.length ? (gdps.reduce((acc, value) => acc + value, 0) / gdps.length) : null;
     const ultimaFecha = animales
       .map((animal) => animal.fecha_ultimo_peso || animal.actualizado_en || animal.updated_at)
       .filter(Boolean)
-      .sort((a, b) => new Date(b) - new Date(a))[0];
+      .sort((a, b) => new Date(b) - new Date(a))[0] || lote.updated_at || lote.actualizado_en || lote.creado_en || lote.created_at;
 
     return { cc, gdpPromedio, ultimaFecha };
   };
@@ -114,7 +122,7 @@ const PaginaLotes = () => {
       <div className="space-y-3">
         {lotes.map((lote) => {
           const animales = animalesPorLote[lote.id] || [];
-          const resumen = calcularResumen(animales);
+          const resumen = calcularResumen(lote, animales);
           const loteExpandido = loteExpandidoId === lote.id;
           const vistaCorta = animales.slice(0, 4).map((animal) => animal.caravana).filter(Boolean);
 
@@ -126,11 +134,9 @@ const PaginaLotes = () => {
                 onClick={() => abrirLote(lote)}
               >
                 <h3 className="font-semibold">📁 {lote.nombre}</h3>
-                {loteExpandido && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    CC: {resumen.cc} · GDP: {resumen.gdpPromedio?.toFixed(2) || 'N/A'} · Última fecha: {resumen.ultimaFecha ? new Date(resumen.ultimaFecha).toLocaleDateString('es-AR') : 'N/A'}
-                  </p>
-                )}
+                <p className="text-sm text-gray-600 mt-1">
+                  CC: {resumen.cc} · GDP: {resumen.gdpPromedio?.toFixed(2) || 'N/A'} · Última fecha: {resumen.ultimaFecha ? new Date(resumen.ultimaFecha).toLocaleDateString('es-AR') : 'N/A'}
+                </p>
               </button>
 
               {!loteExpandido && (
