@@ -1252,7 +1252,7 @@
               <h2 style={{ fontSize: 24, marginBottom: 8 }}>{animal.nombre || 'Sin nombre'}</h2>
               <p style={{ color: '#666', marginBottom: 4 }}>Caravana: {animal.caravana}</p>
               <p style={{ color: '#666', marginBottom: 4 }}>Raza: {animal.raza || '—'} · Sexo: {animal.sexo === 'hembra' ? 'Hembra' : 'Macho'}</p>
-              <p style={{ color: '#666', marginBottom: 4 }}>Potrero: {animal.potrero || '—'} · Lote: {(lotes || []).find((l) => String(l.id) === String(animal.lote_id))?.nombre || animal.lote_nombre || '—'}</p>
+              <p style={{ color: '#666', marginBottom: 4 }}>Lote: {(lotes || []).find((l) => String(l.id) === String(animal.lote_id))?.nombre || animal.lote_nombre || '—'}</p>
               <p style={{ fontSize: 18, fontWeight: 600, color: '#2e7d32', marginTop: 8 }}>Peso actual: {animal.peso_actual || '—'} kg</p>
             </div>
           </div>
@@ -1384,6 +1384,8 @@
     function LoteDetail({ loteId, token, onBack, onSelectAnimal, animales, getAnimalImage }) {
       const [lote, setLote] = useState(null);
       const [loading, setLoading] = useState(true);
+      const [errorApi, setErrorApi] = useState('');
+      const [pythonOutput, setPythonOutput] = useState(null);
       const chartRef = useRef(null);
       const chartInstance = useRef(null);
 
@@ -1420,6 +1422,66 @@
       const pesoPromedio = pesos.length ? (pesos.reduce((acc, v) => acc + v, 0) / pesos.length).toFixed(1) : null;
       const pesoMin = pesos.length ? Math.min(...pesos) : null;
       const pesoMax = pesos.length ? Math.max(...pesos) : null;
+
+      const ejecutarAnalisisLote = (tipo) => {
+        if (!animalesDelLote.length) {
+          setPythonOutput({ titulo: 'Sin datos disponibles', subtitulo: 'El lote no tiene animales activos para analizar.', items: [] });
+          return;
+        }
+
+        const datosOrdenados = animalesDelLote
+          .map((a) => ({ ...a, pesoNum: parseFloat(a.peso_actual), pesoNacimientoNum: parseFloat(a.peso_nacimiento) }))
+          .filter((a) => !Number.isNaN(a.pesoNum));
+
+        if (!datosOrdenados.length) {
+          setPythonOutput({ titulo: 'Sin pesajes válidos', subtitulo: 'Registra pesos para habilitar las funciones avanzadas del lote.', items: [] });
+          return;
+        }
+
+        if (tipo === 'crecimiento') {
+          const ranking = [...datosOrdenados]
+            .sort((a, b) => b.pesoNum - a.pesoNum)
+            .slice(0, 5)
+            .map((a, idx) => `${idx + 1}. ${a.nombre || a.caravana}: ${a.pesoNum.toFixed(1)} kg`);
+          setPythonOutput({ titulo: 'Análisis de crecimiento del lote', subtitulo: `Top ${ranking.length} animales por peso actual.`, items: ranking });
+          return;
+        }
+
+        if (tipo === 'proyeccion') {
+          const promedioActual = datosOrdenados.reduce((acc, a) => acc + a.pesoNum, 0) / datosOrdenados.length;
+          const conNacimiento = datosOrdenados.filter((a) => !Number.isNaN(a.pesoNacimientoNum));
+          const promedioNacimiento = conNacimiento.length
+            ? conNacimiento.reduce((acc, a) => acc + a.pesoNacimientoNum, 0) / conNacimiento.length
+            : null;
+          const crecimientoBase = promedioNacimiento ? Math.max((promedioActual - promedioNacimiento) / 180, 0.25) : 0.65;
+          const proyeccion30d = promedioActual + (crecimientoBase * 30);
+          setPythonOutput({
+            titulo: 'Proyección de peso del lote',
+            subtitulo: 'Estimación simple a 30 días basada en crecimiento promedio.',
+            items: [
+              `Peso promedio actual: ${promedioActual.toFixed(1)} kg`,
+              `Ganancia diaria estimada: ${crecimientoBase.toFixed(2)} kg/día`,
+              `Proyección promedio a 30 días: ${proyeccion30d.toFixed(1)} kg`,
+            ],
+          });
+          return;
+        }
+
+        const animalesCriticos = [...datosOrdenados]
+          .sort((a, b) => a.pesoNum - b.pesoNum)
+          .slice(0, 3)
+          .map((a) => `${a.nombre || a.caravana} (${a.pesoNum.toFixed(1)} kg)`);
+        setPythonOutput({
+          titulo: 'Reporte rápido del lote',
+          subtitulo: `Resumen de ${datosOrdenados.length} animales con peso registrado.`,
+          items: [
+            `Peso mínimo: ${pesoMin != null ? `${pesoMin.toFixed(1)} kg` : '—'}`,
+            `Peso máximo: ${pesoMax != null ? `${pesoMax.toFixed(1)} kg` : '—'}`,
+            `Peso promedio: ${pesoPromedio ? `${pesoPromedio} kg` : '—'}`,
+            `Animales a monitorear: ${animalesCriticos.length ? animalesCriticos.join(', ') : 'No hay alertas'}`,
+          ],
+        });
+      };
 
       useEffect(() => {
         if (!chartRef.current) return;
@@ -1496,10 +1558,24 @@
           <div className="chart-container" style={{ marginBottom: 20 }}>
             <div className="chart-title">Funciones Python del lote</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => window.alert('Función Python por lote: análisis de crecimiento (pendiente de endpoint).')}>🐍 Análisis crecimiento lote</button>
-              <button type="button" className="btn btn-secondary" onClick={() => window.alert('Función Python por lote: proyección de peso (pendiente de endpoint).')}>🐍 Proyección de lote</button>
-              <button type="button" className="btn btn-secondary" onClick={() => window.alert('Función Python por lote: reporte avanzado (pendiente de endpoint).')}>🐍 Reporte lote</button>
+              <button type="button" className="btn btn-secondary" onClick={() => ejecutarAnalisisLote('crecimiento')}>🐍 Análisis crecimiento lote</button>
+              <button type="button" className="btn btn-secondary" onClick={() => ejecutarAnalisisLote('proyeccion')}>🐍 Proyección de lote</button>
+              <button type="button" className="btn btn-secondary" onClick={() => ejecutarAnalisisLote('reporte')}>🐍 Reporte lote</button>
             </div>
+
+            {pythonOutput && (
+              <div style={{ marginTop: 16, background: '#f9fbf8', border: '1px solid #d8e7d5', borderRadius: 8, padding: 14 }}>
+                <div style={{ fontWeight: 700, color: '#2e7d32', marginBottom: 4 }}>{pythonOutput.titulo}</div>
+                <div style={{ color: '#666', marginBottom: pythonOutput.items.length ? 8 : 0 }}>{pythonOutput.subtitulo}</div>
+                {pythonOutput.items.length > 0 && (
+                  <ul style={{ paddingLeft: 18, color: '#333', margin: 0 }}>
+                    {pythonOutput.items.map((item, idx) => (
+                      <li key={`${item}-${idx}`} style={{ marginBottom: 6 }}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
 
           {animalesDelLote.length > 0 ? (
@@ -1521,8 +1597,7 @@
                   </div>
                   <div className="animal-info">
                     <div className="info-item"><span className="info-label">Raza</span> {animal.raza || 'N/A'}</div>
-                    <div className="info-item"><span className="info-label">Potrero</span> {animal.potrero || 'N/A'}</div>
-                  </div>
+                                      </div>
                 </div>
               ))}
             </div>
@@ -1536,12 +1611,12 @@
     }
 
     // ==================== TAB LOTES ====================
-    function LotesTab({ lotes, onSelectLote, getAnimalImage }) {
+    function LotesTab({ lotes, onSelectLote }) {
       if (!lotes || lotes.length === 0) {
         return (
           <div className="empty-state">
             <h2>No hay lotes</h2>
-            <p>Crea un lote en Ajustes y asígnalo a los animales.</p>
+            <p>Crea un lote al cargar un animal o desde Ajustes.</p>
           </div>
         );
       }
@@ -1551,19 +1626,56 @@
           <div className="section-header">
             <h2 className="section-title">Lotes ({lotes.length})</h2>
           </div>
-          <p style={{ color: '#666', marginBottom: 20 }}>Haz clic en un lote para ver el listado de animales.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-            {lotes.map((l) => (
-              <div key={l.id} className="lote-card" onClick={() => onSelectLote(l.id)}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>{l.nombre}</div>
-                    <div style={{ fontSize: 14, color: '#666' }}>{l.cantidad_animales ?? 0} animales · {l.ubicacion || '—'}</div>
+          <p style={{ color: '#666', marginBottom: 20 }}>Cada lote se muestra como una tabla con sus animales asociados.</p>
+
+          <div style={{ display: 'grid', gap: 16 }}>
+            {lotes.map((l) => {
+              const animalesLote = l.animales || [];
+              return (
+                <div key={l.id} className="chart-container" style={{ marginBottom: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+                    <div>
+                      <div className="chart-title" style={{ marginBottom: 4 }}>{l.nombre}</div>
+                      <div style={{ fontSize: 14, color: '#666' }}>{animalesLote.length} animales · {l.ubicacion || '—'}</div>
+                    </div>
+                    <button type="button" className="btn btn-secondary" onClick={() => onSelectLote && onSelectLote(l.id)}>Ver detalle del lote</button>
                   </div>
-                  <span style={{ color: '#6f9b69', fontWeight: 600 }}>Ver listado →</span>
+
+                  <div className="table-container">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Perfil</th>
+                          <th>Caravana</th>
+                          <th>Raza</th>
+                          <th>Sexo</th>
+                          <th>Peso actual</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {animalesLote.length === 0 ? (
+                          <tr>
+                            <td colSpan="6" style={{ color: '#777' }}>Sin animales asignados a este lote.</td>
+                          </tr>
+                        ) : (
+                          animalesLote.map((a) => (
+                            <tr key={a.id}>
+                              <td>{a.nombre || 'Sin nombre'}</td>
+                              <td>{a.caravana}</td>
+                              <td>{a.raza || '—'}</td>
+                              <td>{a.sexo === 'hembra' ? 'Hembra' : 'Macho'}</td>
+                              <td>{a.peso_actual || '—'} kg</td>
+                              <td>{a.estado || 'activo'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       );
@@ -1646,7 +1758,7 @@
       }, []);
       const [formAlta, setFormAlta] = useState({
         caravana: '', nombre: '', raza: '', sexo: 'hembra',
-        fecha_nacimiento: '', peso_nacimiento: '', potrero: '', lote_id: ''
+        fecha_nacimiento: '', peso_nacimiento: '', lote_id: '', nuevo_lote: '', nueva_ubicacion: ''
       });
       const [enviandoAlta, setEnviandoAlta] = useState(false);
       const [mensajeAlta, setMensajeAlta] = useState('');
@@ -1706,6 +1818,29 @@
         setEnviandoAlta(true);
         setMensajeAlta('');
         try {
+          let loteSeleccionadoId = formAlta.lote_id ? parseInt(formAlta.lote_id, 10) : null;
+
+          if (formAlta.nuevo_lote.trim()) {
+            const resLote = await fetch(`${API_URL}/lotes`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                nombre: formAlta.nuevo_lote.trim(),
+                ubicacion: formAlta.nueva_ubicacion.trim() || null,
+              }),
+            });
+            const dataLote = await resLote.json();
+            if (!resLote.ok) {
+              setMensajeAlta(dataLote.error || 'No se pudo crear el lote');
+              setEnviandoAlta(false);
+              return;
+            }
+            loteSeleccionadoId = dataLote.id;
+          }
+
           const res = await fetch(`${API_URL}/animales`, {
             method: 'POST',
             headers: {
@@ -1719,14 +1854,13 @@
               sexo: formAlta.sexo || 'hembra',
               fecha_nacimiento: formAlta.fecha_nacimiento || null,
               peso_nacimiento: formAlta.peso_nacimiento ? parseFloat(formAlta.peso_nacimiento) : null,
-              potrero: formAlta.potrero || null,
-              lote_id: formAlta.lote_id ? parseInt(formAlta.lote_id) : null,
+              lote_id: loteSeleccionadoId,
             }),
           });
           const data = await res.json();
           if (res.ok) {
             setMensajeAlta('Animal registrado correctamente.');
-            setFormAlta({ caravana: '', nombre: '', raza: '', sexo: 'hembra', fecha_nacimiento: '', peso_nacimiento: '', potrero: '', lote_id: '' });
+            setFormAlta({ caravana: '', nombre: '', raza: '', sexo: 'hembra', fecha_nacimiento: '', peso_nacimiento: '', lote_id: '', nuevo_lote: '', nueva_ubicacion: '' });
             setMostrarFormAlta(false);
             onRefresh();
           } else {
@@ -1817,15 +1951,35 @@
                     <input type="number" step="0.1" className="form-input" value={formAlta.peso_nacimiento} onChange={(e) => setFormAlta({ ...formAlta, peso_nacimiento: e.target.value })} />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Potrero</label>
-                    <input className="form-input" value={formAlta.potrero} onChange={(e) => setFormAlta({ ...formAlta, potrero: e.target.value })} />
-                  </div>
-                  <div className="form-group">
                     <label className="form-label">Lote</label>
-                    <select className="form-input" value={formAlta.lote_id} onChange={(e) => setFormAlta({ ...formAlta, lote_id: e.target.value })}>
-                      <option value="">Sin lote</option>
+                    <select
+                      className="form-input"
+                      value={formAlta.lote_id}
+                      onChange={(e) => setFormAlta({ ...formAlta, lote_id: e.target.value, nuevo_lote: '' })}
+                      disabled={!!formAlta.nuevo_lote.trim()}
+                    >
+                      <option value="">{lotes.length === 0 ? 'No hay lotes cargados' : 'Seleccionar lote existente'}</option>
                       {lotes.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
                     </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Nuevo lote (si no existe)</label>
+                    <input
+                      className="form-input"
+                      value={formAlta.nuevo_lote}
+                      onChange={(e) => setFormAlta({ ...formAlta, nuevo_lote: e.target.value, lote_id: '' })}
+                      placeholder="Ej: Lote recría oeste"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Ubicación nuevo lote</label>
+                    <input
+                      className="form-input"
+                      value={formAlta.nueva_ubicacion}
+                      onChange={(e) => setFormAlta({ ...formAlta, nueva_ubicacion: e.target.value })}
+                      placeholder="Opcional"
+                      disabled={!formAlta.nuevo_lote.trim()}
+                    />
                   </div>
                 </div>
                 {mensajeAlta && <p style={{ marginBottom: 12, color: mensajeAlta.includes('correctamente') ? '#2e7d32' : '#c62828' }}>{mensajeAlta}</p>}
@@ -1905,7 +2059,6 @@
                     <div className="animal-info" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       <div className="info-item"><span className="info-label">Caravana</span> {resultadoBusqueda.caravana}</div>
                       <div className="info-item"><span className="info-label">Raza</span> {resultadoBusqueda.raza || 'N/A'}</div>
-                      <div className="info-item"><span className="info-label">Potrero</span> {resultadoBusqueda.potrero || 'N/A'}</div>
                       <div className="info-item"><span className="info-label">Peso actual</span> {resultadoBusqueda.peso_actual || '—'} kg</div>
                     </div>
                   </div>
