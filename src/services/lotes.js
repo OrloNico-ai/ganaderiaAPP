@@ -1,8 +1,15 @@
 const API_BASE = '/api';
 
+const obtenerToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+
 const getJson = async (url, options = {}) => {
+  const token = obtenerToken();
   const response = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
     ...options,
   });
   if (!response.ok) {
@@ -27,7 +34,10 @@ export const asignarAnimalALote = async (animalId, loteId, motivo = 'Cambio manu
 export const obtenerAnimalesDelLote = async (loteId) => getJson(`${API_BASE}/lotes/${loteId}/animales`);
 
 export const exportarLoteExcel = async (loteId) => {
-  const response = await fetch(`${API_BASE}/lotes/${loteId}/export/excel`);
+  const token = obtenerToken();
+  const response = await fetch(`${API_BASE}/lotes/${loteId}/export/excel`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   if (!response.ok) throw new Error('No se pudo exportar lote');
   const blob = await response.blob();
   const fileUrl = URL.createObjectURL(blob);
